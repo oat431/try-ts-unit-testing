@@ -1,20 +1,22 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheckService } from '../service/health-check.service';
 import { ResponseDto } from 'src/common/payload/response.dto';
 import { HealthCheckDto } from '../dto/health-check.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { HealthCheckService, HttpHealthIndicator, HealthCheck } from '@nestjs/terminus';
 
 @ApiTags('HealthCheck API')
 @Controller('health-check')
 export class HealthCheckController {
-    constructor(private readonly healthCheckService: HealthCheckService) { }
+    constructor(
+        private readonly healthCheckService: HealthCheckService,
+        private readonly http: HttpHealthIndicator,
+    ) { }
 
     @Get()
-    getHealthCheck(): ResponseDto<HealthCheckDto> {
-        return {
-            data: this.healthCheckService.getHealthCheck(),
-            message: 'Health check is ok',
-            statusCode: 200,
-        };
+    @HealthCheck()
+    check() {
+        return this.healthCheckService.check([
+            () => this.http.pingCheck('nestjs-doc', 'https://docs.nestjs.com'),
+        ]);
     }
 }
